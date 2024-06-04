@@ -37,13 +37,22 @@ func main() {
 
 	actualUrl := strings.Split(streams[0], " ")[1]
 
+	responseMessage := "HTTP/1.1 404 Not Found\r\n\r\n"
+
 	if strings.HasPrefix(actualUrl, "/echo/") {
 		echoMessage := strings.Replace(actualUrl, "/echo/", "", 1)
-		responseMessage := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage)
-		connection.Write([]byte(responseMessage))
+		responseMessage = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage)
+	} else if strings.HasPrefix(actualUrl, "/user-agent") {
+		for i := 1; i < len(streams); i++ {
+			if strings.HasPrefix(streams[i], "User-Agent") {
+				header := strings.Replace(streams[i], "User-Agent: ", "", 1)
+				responseMessage = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(header), header)
+				break
+			}
+		}
 	} else if strings.Compare(actualUrl, "/") == 0 {
-		connection.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
-	} else {
-		connection.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		responseMessage = "HTTP/1.1 200 OK\r\n\r\n"
 	}
+	print(actualUrl)
+	connection.Write([]byte(responseMessage))
 }
