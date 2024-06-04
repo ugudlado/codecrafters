@@ -37,9 +37,11 @@ func main() {
 
 	actualUrl := strings.Split(streams[0], " ")[1]
 
-	expectedUrl := "/"
-
-	if strings.Compare(actualUrl, expectedUrl) == 0 {
+	if strings.HasPrefix(actualUrl, "/echo/") {
+		echoMessage := strings.Replace(actualUrl, "/echo/", "", 1)
+		responseMessage := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage)
+		connection.Write([]byte(responseMessage))
+	} else if strings.Compare(actualUrl, "/") == 0 {
 		connection.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 	} else {
 		connection.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
