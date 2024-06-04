@@ -17,15 +17,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	connection, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
-	defer connection.Close()
+	for {
+		connection, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
 
+		go handleConnection(connection)
+	}
+}
+
+func handleConnection(connection net.Conn) {
+	for {
+		handleRequest(connection)
+	}
+}
+
+func handleRequest(connection net.Conn) {
 	buffer := make([]byte, 1024)
-	_, err = connection.Read(buffer)
+	_, err := connection.Read(buffer)
 	if err != nil {
 		fmt.Println("Failed to read data from connection")
 		os.Exit(1)
