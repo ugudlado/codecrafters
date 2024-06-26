@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"net"
 	"os"
@@ -126,8 +128,17 @@ func handleRequest(data string, serverOptions ServerOptions) string {
 			result = append(result, "Content-Type: text/plain")
 			if isEncoded {
 				result = append(result, "Content-Encoding: gzip")
+
+				var buffer bytes.Buffer
+				gzipWriter := gzip.NewWriter(&buffer)
+				gzipWriter.Write([]byte(echoMessage))
+				gzipWriter.Close()
+				echoMessage = buffer.String()
+
+				result = append(result, fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage))
+			} else {
+				result = append(result, fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage))
 			}
-			result = append(result, fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage))
 			responseMessage = strings.Join(result, "\r\n")
 		} else if strings.HasPrefix(actualUrl, "/user-agent") {
 			for i := 1; i < len(streams); i++ {
