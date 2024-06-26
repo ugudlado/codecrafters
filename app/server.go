@@ -83,6 +83,17 @@ func handleRequest(data string, serverOptions ServerOptions) string {
 
 	actualUrl := strings.Split(streams[0], " ")[1]
 
+	isEncoded := false
+	for i := 0; i < len(streams); i++ {
+		if strings.HasPrefix(streams[i], "Accept-Encoding:") {
+			scheme := strings.Replace(streams[i], "Accept-Encoding: ", "", 1)
+			if strings.Contains(scheme, "gzip") {
+				isEncoded = true
+				break
+			}
+		}
+	}
+
 	responseMessage := "HTTP/1.1 404 Not Found\r\n\r\n"
 
 	if strings.HasPrefix(streams[0], "POST") {
@@ -111,7 +122,13 @@ func handleRequest(data string, serverOptions ServerOptions) string {
 			}
 		} else if strings.HasPrefix(actualUrl, "/echo/") {
 			echoMessage := strings.Replace(actualUrl, "/echo/", "", 1)
-			responseMessage = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage)
+			result := []string{"HTTP/1.1 200 OK"}
+			result = append(result, "Content-Type: text/plain")
+			if isEncoded {
+				result = append(result, "Content-Encoding: gzip")
+			}
+			result = append(result, fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(echoMessage), echoMessage))
+			responseMessage = strings.Join(result, "\r\n")
 		} else if strings.HasPrefix(actualUrl, "/user-agent") {
 			for i := 1; i < len(streams); i++ {
 				if strings.HasPrefix(streams[i], "User-Agent") {
